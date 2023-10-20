@@ -63,12 +63,14 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (
 		var err error
 
 		// 1. transfer tableにInsert
+
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams(arg))
 		if err != nil {
 			return err
 		}
 
 		// 2. 口座Aに 送信した料金分マイナスの entryをInsert
+
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
@@ -79,6 +81,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (
 		}
 
 		// 3. 口座Bに受け取った料金分プラスするentryをInsert
+
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
@@ -88,9 +91,27 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (
 			return err
 		}
 
-		// TODO : update accounts balance with deadlocks
 		// 4. 口座Aの残高を送った料金分減らす。
+
+		result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+			ID:     arg.FromAccountID,
+			Amount: -arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
+
 		// 5. 口座Bの残高を受け取った分だけ増やす。
+
+		result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+			ID:     arg.ToAccountID,
+			Amount: arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
