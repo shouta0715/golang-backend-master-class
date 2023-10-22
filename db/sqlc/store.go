@@ -1,5 +1,8 @@
 package db
 
+//! Queryをを実行するためのStoreを作成する
+//! つまり、Queryを行いたいときは、Storeを作成して、Storeのメソッドを呼び出す
+
 import (
 	"context"
 	"database/sql"
