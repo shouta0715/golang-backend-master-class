@@ -28,7 +28,16 @@ test:
 server:
 	go run main.go
 
+start:
+	docker compose up -d
+
+stop:
+	docker compose down
+
+dev:
+	docker compose -f docker-compose.dev.yml up -d && make server
+
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/shouta0715/simple-bank/db/sqlc Store
 
-.PHONY: postgres createdb migrateup migratedown dropdb sqlc test server mock migratedown1 migrateup1
+.PHONY: postgres createdb migrateup migratedown dropdb sqlc test server mock migratedown1 migrateup1 start stop
