@@ -1,0 +1,71 @@
+Project SimpleBank {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Simple Bank Database
+  '''
+}
+
+
+Table users as U {
+  username varchar [pk]
+  hashed_password varchar [not null]
+  full_name varchar [not null]
+  email varchar [unique , not null ]
+  password_changed_at timestamptz [not null, default:'0001-01-01 00:00:00Z']
+  created_at timestamptz [not null, default: `now()`]
+
+}
+
+
+// アカウント
+Table accounts as A {
+  id bigserial [pk]
+  owner varchar [ref: > U.username,not null] // 作った人の名前
+  balance bigint [not null] //　残高
+  currency varchar [not null] // 通貨の名前
+  created_at timestamptz [not null, default: `now()`]
+  
+  Indexes {
+    owner
+    (owner, currency) [unique]
+  }
+}
+
+// 口座残高を記録するテーブル
+Table entries {
+  id bigserial [pk]
+  account_id bigint [ref: > A.id , not null]
+  amount bigint [not null ,note: 'can be negative or positive'] // 送金の量
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    account_id
+  }
+}
+
+// 他の口座への送金を記録するテーブル
+Table transfers {
+  id bigserial [pk]
+  from_account_id bigint [ref: > A.id, not null] //送られてきた先
+  to_account_id bigint [ref: > A.id, not null] // 送り先
+  amount bigint [not null ,note:'must be positive'] //量
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    from_account_id
+    to_account_id
+    (from_account_id, to_account_id)
+  }
+}
+
+Table sessions {
+  id varchar [pk]
+  username varchar [not null,ref: > U.username]
+  refresh_token varchar [not null]
+  user_agent varchar [not null]
+  client_ip varchar [not null]
+  is_blocked boolean [not null,default:false]
+  expires_at timestamp [not null]
+  created_at timestamp [not null, default: `now()`]
+
+}
