@@ -31,11 +31,20 @@ service SimpleBank {
       post: "/v1/create_user"
       body: "*"
     };
-  }
-  rpc Login(LoginRequest) returns (LoginResponse) {
-    option (google.api.http) = {
-      post: "/v1/login"
-      body: "*"
-    };
-  }
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to create a new user."
+      summary: "Create a new user";
+  };
+}
+rpc Login(LoginRequest) returns (LoginResponse) {
+  option (google.api.http) = {
+    post: "/v1/login"
+    body: "*"
+  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+    description: "Use this API to create a new user."
+    summary: "Create a new user";
+};
+}
 }
