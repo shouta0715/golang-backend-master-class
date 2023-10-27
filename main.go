@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net"
+	"net/http"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/shouta0715/simple-bank/api"
 	db "github.com/shouta0715/simple-bank/db/sqlc"
 	"github.com/shouta0715/simple-bank/gapi"
@@ -28,7 +31,8 @@ func main() {
 	}
 
 	store := db.NewStore(conn)
-	runGrpcServer(config, store)
+	go runGrpcServer(config, store)
+	runGatewayServer(config, store)
 
 }
 
@@ -56,6 +60,43 @@ func runGrpcServer(config util.Config, store db.Store) {
 		log.Fatal("cannot start server:", err)
 	}
 
+}
+
+func runGatewayServer(config util.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
+
+	if err != nil {
+		log.Fatal("cannot create server:", err)
+	}
+
+	grpcMux := runtime.NewServeMux()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
+
+	if err != nil {
+		log.Fatal("cannot register gateway server:", err)
+	}
+
+	mux := http.NewServeMux()
+
+	// gRPCを受け取る
+	mux.Handle("/", grpcMux)
+
+	listener, err := net.Listen("tcp", config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal("cannot start server:", err)
+	}
+
+	log.Println("starting HTTP gateway server on", listener.Addr().String())
+
+	err = http.Serve(listener, mux)
+
+	if err != nil {
+		log.Fatal("cannot start server:", err)
+	}
 }
 
 func runGinServer(config util.Config, store db.Store) {
