@@ -7,12 +7,18 @@ import (
 	db "github.com/shouta0715/simple-bank/db/sqlc"
 	"github.com/shouta0715/simple-bank/pb"
 	"github.com/shouta0715/simple-bank/util"
+	"github.com/shouta0715/simple-bank/validator"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	violations := validateCreateUserRequest(req)
 
+	if violations != nil {
+		return nil, invalidArgumentError(violations)
+	}
 	// getterが使用できる。
 	hashedPassword, err := util.HashPassword(req.GetPassword())
 
@@ -48,4 +54,25 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 	}
 
 	return rsp, nil
+}
+
+func validateCreateUserRequest(req *pb.CreateUserRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+	if err := validator.ValidateUsername(req.GetUsername()); err != nil {
+		violations = append(violations, filedViolation("username", err))
+	}
+
+	if err := validator.ValidatePassword(req.GetPassword()); err != nil {
+		violations = append(violations, filedViolation("password", err))
+	}
+
+	if err := validator.ValidateFullName(req.GetFullName()); err != nil {
+		violations = append(violations, filedViolation("full_name", err))
+	}
+
+	if err := validator.ValidateEmail(req.GetEmail()); err != nil {
+		violations = append(violations, filedViolation("email", err))
+	}
+
+	return violations
+
 }
