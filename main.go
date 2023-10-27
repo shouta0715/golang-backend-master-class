@@ -85,6 +85,9 @@ func runGatewayServer(config util.Config, store db.Store) {
 	// gRPCを受け取る
 	mux.Handle("/", grpcMux)
 
+	fs := http.FileServer(http.Dir("./doc/swagger"))
+	mux.Handle("/swagger/", http.StripPrefix("/swagger", fs))
+
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
 		log.Fatal("cannot start server:", err)
