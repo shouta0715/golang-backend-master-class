@@ -8,8 +8,9 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/shouta0715/simple-bank/api"
+	"github.com/rakyll/statik/fs"
 	db "github.com/shouta0715/simple-bank/db/sqlc"
+	_ "github.com/shouta0715/simple-bank/doc/statik"
 	"github.com/shouta0715/simple-bank/gapi"
 	"github.com/shouta0715/simple-bank/pb"
 	"github.com/shouta0715/simple-bank/util"
@@ -85,8 +86,13 @@ func runGatewayServer(config util.Config, store db.Store) {
 	// gRPCを受け取る
 	mux.Handle("/", grpcMux)
 
-	fs := http.FileServer(http.Dir("./doc/swagger"))
-	mux.Handle("/swagger/", http.StripPrefix("/swagger", fs))
+	statikFs, err := fs.New()
+	if err != nil {
+		log.Fatal("cannot create statik file system:", err)
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFs))
+	mux.Handle("/swagger/", swaggerHandler)
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
@@ -102,16 +108,16 @@ func runGatewayServer(config util.Config, store db.Store) {
 	}
 }
 
-func runGinServer(config util.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
+// func runGinServer(config util.Config, store db.Store) {
+// 	server, err := api.NewServer(config, store)
 
-	if err != nil {
-		log.Fatal("cannot create server:", err)
-	}
+// 	if err != nil {
+// 		log.Fatal("cannot create server:", err)
+// 	}
 
-	err = server.Start(config.HTTPServerAddress)
+// 	err = server.Start(config.HTTPServerAddress)
 
-	if err != nil {
-		log.Fatal("cannot start server:", err)
-	}
-}
+// 	if err != nil {
+// 		log.Fatal("cannot start server:", err)
+// 	}
+// }
