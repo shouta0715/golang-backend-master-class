@@ -6,6 +6,7 @@ import (
 	"github.com/hibiken/asynq"
 )
 
+// ! Redisにタスクのキューを送るためのインターフェース
 type TaskDistributor interface {
 	DistributeTaskSendVerifyEmail(
 		ctx context.Context,
