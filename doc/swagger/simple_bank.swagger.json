@@ -23,8 +23,8 @@
   "paths": {
     "/v1/create_user": {
       "post": {
-        "summary": "Create a new user",
-        "description": "Use this API to create a new user.",
+        "summary": "Create new user",
+        "description": "Use this API to create a new user",
         "operationId": "SimpleBank_CreateUser",
         "responses": {
           "200": {
@@ -55,16 +55,16 @@
         ]
       }
     },
-    "/v1/login": {
-      "post": {
-        "summary": "Create a new user",
-        "description": "Use this API to create a new user.",
-        "operationId": "SimpleBank_Login",
+    "/v1/update_user": {
+      "patch": {
+        "summary": "Update user",
+        "description": "Use this API to update user",
+        "operationId": "SimpleBank_UpdateUser",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/pbLoginResponse"
+              "$ref": "#/definitions/pbUpdateUserResponse"
             }
           },
           "default": {
@@ -80,7 +80,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/pbLoginRequest"
+              "$ref": "#/definitions/pbUpdateUserRequest"
             }
           }
         ],
@@ -116,10 +116,16 @@
         }
       }
     },
-    "pbLoginRequest": {
+    "pbUpdateUserRequest": {
       "type": "object",
       "properties": {
         "username": {
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "email": {
           "type": "string"
         },
         "password": {
@@ -127,28 +133,11 @@
         }
       }
     },
-    "pbLoginResponse": {
+    "pbUpdateUserResponse": {
       "type": "object",
       "properties": {
         "user": {
           "$ref": "#/definitions/pbUser"
-        },
-        "sessionId": {
-          "type": "string"
-        },
-        "accessToken": {
-          "type": "string"
-        },
-        "refreshToken": {
-          "type": "string"
-        },
-        "accessTokenExpiresAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "refreshTokenExpiresAt": {
-          "type": "string",
-          "format": "date-time"
         }
       }
     },
