@@ -2,12 +2,15 @@ package gapi
 
 import (
 	"context"
+	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	db "github.com/shouta0715/simple-bank/db/sqlc"
 	"github.com/shouta0715/simple-bank/pb"
 	"github.com/shouta0715/simple-bank/util"
 	"github.com/shouta0715/simple-bank/validator"
+	"github.com/shouta0715/simple-bank/worker"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -42,11 +45,28 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 			switch pgErr.Code.Name() {
 			case "unique_violation":
 
-				return nil, status.Errorf(codes.InvalidArgument, "username %s already exists", req.GetUsername())
+				return nil, status.Errorf(codes.AlreadyExists, "already exists: %v", pgErr)
 			}
 		}
 
 		return nil, status.Errorf(codes.Internal, "failed to create user %s", err)
+	}
+
+	taskPayload := &worker.PayloadSendVerifyEmail{
+		Username: user.Username,
+	}
+
+	opts := []asynq.Option{
+		asynq.MaxRetry(10),
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(worker.QueueCritical),
+	}
+
+	// TODO : user db transaction
+	err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to distribute task %s", err)
 	}
 
 	rsp := &pb.CreateUserResponse{

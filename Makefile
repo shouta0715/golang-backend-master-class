@@ -36,11 +36,11 @@ start:
 stop:
 	docker compose down
 
-start_db:
-	docker compose -f docker-compose.dev.yml up -d 
-
 dev:
-	docker compose -f docker-compose.dev.yml up -d && make server
+	docker compose -f docker-compose.dev.yml up -d
+
+stopdev:
+	docker compose -f docker-compose.dev.yml down
 
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/shouta0715/simple-bank/db/sqlc Store
@@ -64,4 +64,4 @@ proto:
 evans:
 	evans -r repl --host localhost --port 9090 -r repl
 
-.PHONY: postgres createdb migrateup migratedown dropdb sqlc test server mock migratedown1 migrateup1 start stop dev db_docs db_schme proto evans start_db
+.PHONY: postgres createdb migrateup migratedown dropdb sqlc test server mock migratedown1 migrateup1 start stop dev db_docs db_schme proto evans 

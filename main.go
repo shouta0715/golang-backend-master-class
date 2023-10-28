@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/shouta0715/simple-bank/gapi"
 	"github.com/shouta0715/simple-bank/pb"
 	"github.com/shouta0715/simple-bank/util"
+	"github.com/shouta0715/simple-bank/worker"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -48,8 +50,27 @@ func main() {
 	runDBMigrations(config.MigrationURL, config.DBSource)
 
 	store := db.NewStore(conn)
-	go runGrpcServer(config, store)
-	runGatewayServer(config, store)
+
+	redisOpt := asynq.RedisClientOpt{
+		Addr: config.RedisAddress,
+	}
+
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+
+	go runTaskProcessor(redisOpt, store)
+	go runGrpcServer(config, store, taskDistributor)
+	runGatewayServer(config, store, taskDistributor)
+
+}
+
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	log.Info().Msg("starting task processor")
+	err := taskProcessor.Start()
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot start task processor")
+	}
 
 }
 
@@ -67,8 +88,8 @@ func runDBMigrations(migrationURL, dbSource string) {
 	log.Info().Msg("migration completed")
 }
 
-func runGrpcServer(config util.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func runGrpcServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
@@ -94,8 +115,8 @@ func runGrpcServer(config util.Config, store db.Store) {
 
 }
 
-func runGatewayServer(config util.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func runGatewayServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
