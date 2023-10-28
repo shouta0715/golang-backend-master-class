@@ -15,14 +15,25 @@ import (
 )
 
 func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+
+	authPayload, err := server.authorizeUser(ctx)
+
+	if err != nil {
+		return nil, unauthenticatedError(err)
+	}
+
 	violation := validateUpdateUserRequest(req)
 
 	if violation != nil {
 		return nil, invalidArgumentError(violation)
 	}
 
+	if authPayload.Username != req.GetUsername() {
+		return nil, status.Errorf(codes.PermissionDenied, "cannot update other user's data")
+	}
+
 	arg := db.UpdateUserParams{
-		Username: req.GetUsername(),
+		Username: authPayload.Username,
 		FullName: sql.NullString{
 			String: req.GetFullName(),
 			Valid:  req.FullName != nil,
