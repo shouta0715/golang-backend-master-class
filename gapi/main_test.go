@@ -27,9 +27,9 @@ func newTestServer(t *testing.T, store db.Store, taskDistributor worker.TaskDist
 	return server
 }
 
-func newContextWithBearerToken(t *testing.T, tokenMaker token.Maker, username string, duration time.Duration) context.Context {
+func newContextWithBearerToken(t *testing.T, tokenMaker token.Maker, username string, role string, duration time.Duration) context.Context {
 
-	accessToken, _, err := tokenMaker.CreateToken(username, duration)
+	accessToken, _, err := tokenMaker.CreateToken(username, role, duration)
 
 	require.NoError(t, err)
 
