@@ -18,6 +18,9 @@ migratedown:
 migratedown1:
 	migrate -path db/migration -database "$(DB_URL)" -verbose down 1
 
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
+
 dropdb:
 	docker exec -it postgres12 dropdb simple_bank
 
@@ -25,7 +28,7 @@ sqlc:
 	sqlc generate
 
 test:
-	go test -v -cover ./...
+	go test -v -cover -short ./...
 
 server:
 	go run main.go
@@ -64,4 +67,4 @@ proto:
 evans:
 	evans -r repl --host localhost --port 9090 -r repl
 
-.PHONY: postgres createdb migrateup migratedown dropdb sqlc test server mock migratedown1 migrateup1 start stop dev db_docs db_schme proto evans 
+.PHONY: postgres createdb migrateup migratedown dropdb sqlc test server mock migratedown1 migrateup1 start stop dev db_docs db_schme proto evans  new_migration
