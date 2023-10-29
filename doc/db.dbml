@@ -77,7 +77,7 @@ Table sessions {
   user_agent varchar [not null]
   client_ip varchar [not null]
   is_blocked boolean [not null,default:false]
-  expires_at timestamp [not null]
-  created_at timestamp [not null, default: `now()`]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
 
 }

@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/lib/pq"
 	mockdb "github.com/shouta0715/simple-bank/db/mock"
 	db "github.com/shouta0715/simple-bank/db/sqlc"
 	"github.com/shouta0715/simple-bank/pb"
@@ -147,7 +146,7 @@ func TestCreateUserTxAPI(t *testing.T) {
 				Email:    user.Email,
 			},
 			buildStubs: func(store *mockdb.MockStore, taskDistributor *mockwk.MockTaskDistributor) {
-				store.EXPECT().CreateUserTx(gomock.Any(), gomock.Any()).Times(1).Return(db.CreateUserTxResult{}, &pq.Error{Code: "23505"})
+				store.EXPECT().CreateUserTx(gomock.Any(), gomock.Any()).Times(1).Return(db.CreateUserTxResult{}, db.ErrorUniqueViolation)
 
 				taskPayload := &worker.PayloadSendVerifyEmail{
 					Username: user.Username,

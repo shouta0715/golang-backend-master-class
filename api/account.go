@@ -1,12 +1,10 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	db "github.com/shouta0715/simple-bank/db/sqlc"
 	"github.com/shouta0715/simple-bank/token"
 )
@@ -36,13 +34,11 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	account, err := server.store.CreateAccount(ctx, arg)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			switch pqErr.Code.Name() {
-			case "foreign_key_violation", "unique_violation":
-				ctx.JSON(http.StatusForbidden, errorResponse(err))
-				return
+		errCode := db.ErrorCode(err)
+		if errCode == db.ForeignKeyViolation || errCode == db.UniqueViolation {
 
-			}
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
 		}
 
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -69,7 +65,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 
 	if err != nil {
 
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -106,8 +102,8 @@ func (server *Server) listAccount(ctx *gin.Context) {
 
 	arg := db.ListAccountsParams{
 		Owner:  authPayload.Username,
-		Limit:  int64(req.PageSize),
-		Offset: (int64(req.PageID) - 1) * int64(req.PageSize),
+		Limit:  int32(req.PageSize),
+		Offset: (int32(req.PageID) - 1) * int32(req.PageSize),
 	}
 
 	accounts, err := server.store.ListAccounts(ctx, arg)
