@@ -44,7 +44,7 @@ jobs:
           sudo mv migrate /usr/bin/migrate
           which migrate
 
-      - name: Update app.env
+      - name: Set up environment variables
         run: |
           touch secret.env
           echo "EMAIL_SENDER_ADDRESS=${{secrets.EMAIL_SENDER_ADDRESS}}" >> secret.env
