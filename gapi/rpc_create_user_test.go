@@ -226,6 +226,7 @@ func randomUser() (user db.User, password string) {
 	user = db.User{
 		Username:       util.RandomString(6),
 		FullName:       util.RandomString(6),
+		Role:           util.DepositorRole,
 		HashedPassword: hashedPassword,
 		Email:          util.RandomEmail(),
 	}

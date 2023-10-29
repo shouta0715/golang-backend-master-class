@@ -15,10 +15,11 @@ var (
 
 type Payload struct {
 	Username string `json:"username"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func NewPayload(username string, duration time.Duration) (*Payload, error) {
+func NewPayload(username string, role string, duration time.Duration) (*Payload, error) {
 	tokenID, err := uuid.NewRandom()
 
 	if err != nil {
@@ -27,6 +28,7 @@ func NewPayload(username string, duration time.Duration) (*Payload, error) {
 
 	payload := &Payload{
 		Username: username,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),

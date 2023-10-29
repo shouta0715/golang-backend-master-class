@@ -40,14 +40,22 @@ func (server *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 		return nil, status.Errorf(codes.Unauthenticated, "invalid password: %v", err)
 	}
 
-	accessToken, accessPayload, err := server.maker.CreateToken(user.Username, server.config.AccessTokenDuration)
+	accessToken, accessPayload, err := server.maker.CreateToken(
+		user.Username,
+		user.Role,
+		server.config.AccessTokenDuration,
+	)
 
 	if err != nil {
 
 		return nil, status.Errorf(codes.Internal, "cannot create access token: %v", err)
 	}
 
-	refreshToken, refreshPayload, err := server.maker.CreateToken(user.Username, server.config.RefreshTokenDuration)
+	refreshToken, refreshPayload, err := server.maker.CreateToken(
+		user.Username,
+		user.Role,
+		server.config.RefreshTokenDuration,
+	)
 
 	if err != nil {
 
