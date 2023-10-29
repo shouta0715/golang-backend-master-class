@@ -16,7 +16,7 @@ func createRandomVerifyEmail(t *testing.T) VerifyEmail {
 		SecretCode: util.RandomString(6),
 	}
 
-	verifyEmail, err := testQueries.CreateVerifyEmail(context.Background(), arg)
+	verifyEmail, err := testStore.CreateVerifyEmail(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, verifyEmail)
 
